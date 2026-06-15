@@ -45,6 +45,7 @@ function retrieve(query: string, k = 3) {
 }
 
 export async function POST(req: NextRequest) {
+  try {
   const { question } = await req.json();
   if (!question?.trim()) {
     return NextResponse.json({ error: "No question provided" }, { status: 400 });
@@ -88,4 +89,9 @@ Answer:`;
   const answer = (response.content[0] as { text: string }).text.trim();
   const sources = docs.map((d) => d.title);
   return NextResponse.json({ answer, sources });
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : String(err);
+    console.error("RAG error:", message);
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
 }

@@ -63,8 +63,8 @@ export default function Home() {
         setAnswer(data.answer);
         setSources(data.sources);
       }
-    } catch {
-      setError("Request failed. Check your connection.");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Request failed.");
     } finally {
       setLoading(false);
     }
