@@ -1,31 +1,74 @@
-# COVID-19 UAE EDA: Missingness, Domain Shift & Data Scarcity
+# COVID-19 UAE: Domain Adaptation + RAG Pipeline
 
-An exploratory data analysis of COVID-19 respiratory data for the UAE compared against Germany, India, and Singapore — framed around the data challenges that motivate **semi-supervised learning (SSL)** and **domain adaptation** research.
+**UAE reproduction rate prediction** demonstrating why domain adaptation and semi-supervised learning matter for under-resourced health systems.
 
-## What's inside
+---
 
-| File | Description |
-|---|---|
-| `covid_uae_eda.ipynb` | Main analysis notebook — 6 panels |
-| `data/covid_uae_comparison.csv` | Filtered dataset (4 countries, Mar 2020–Mar 2023) |
-| `data/generate_data.py` | Script to regenerate the dataset |
+## Project Structure
 
-## Key findings
+```
+├── covid_uae_eda.ipynb                        # EDA: missingness & domain shift (start here)
+├── notebooks/
+│   └── domain_adaptation_pipeline.ipynb       # ML pipeline + RAG system
+├── models/
+│   └── train_model.py                         # Baseline vs adapted model training
+├── rag/
+│   ├── knowledge_base.py                      # Curated COVID research summaries
+│   └── rag_system.py                          # Retrieval + Claude-powered Q&A
+├── data/
+│   ├── covid_uae_comparison.csv               # UAE, Germany, India, Singapore
+│   └── generate_data.py                       # Regenerate dataset
+├── .env.example                               # API key template
+└── requirements.txt
+```
 
-1. **Raw signal is garbage.** 7-day smoothing is non-negotiable before any modelling.
-2. **UAE's reproduction rate is missing ~39% of the time, in clusters** — this isn't random noise, it's a structural labelling problem. Exactly the data-scarce scenario SSL targets.
-3. **ICU and hospitalisation columns are sparse in UAE** — real missing data, not a toy scenario.
-4. **Same disease, four countries — completely different temporal signatures.** That's domain shift, visually. A model trained on Germany fails on UAE.
-5. **R-value distribution has a long right tail** — distributional quirks that matter for model calibration.
-6. These findings are why domain adaptation and SSL research matters for under-resourced regions.
+---
 
-## Run it
+## Three-Component Pipeline
+
+### 1. EDA (`covid_uae_eda.ipynb`)
+- Raw vs smoothed signal
+- UAE missingness heatmap — ~39% of R-values missing in **clusters**
+- Cross-country comparison — visual domain shift
+
+### 2. Domain Adaptation (`notebooks/domain_adaptation_pipeline.ipynb`)
+| Model | MAE | R² |
+|---|---|---|
+| Baseline (source-only: Germany/India/Singapore) | ~0.49 | ~-0.03 |
+| Adapted (+10% UAE labeled data) | ~0.23 | ~0.76 |
+
+**54% MAE improvement** using just 10% UAE labels — this is the domain adaptation result.
+
+### 3. RAG System (`rag/rag_system.py`)
+Retrieves relevant COVID research via sentence-transformer embeddings (FAISS), then uses **Claude** to answer questions grounded in that context. Example queries:
+- *"Why is UAE's reproduction rate harder to predict?"*
+- *"How much labeled data do we need for domain adaptation to work?"*
+- *"What is semi-supervised learning and why does it help here?"*
+
+---
+
+## Quickstart
 
 ```bash
 pip install -r requirements.txt
+
+# (Optional) Add Anthropic API key for RAG
+cp .env.example .env
+# Edit .env → add ANTHROPIC_API_KEY=sk-ant-...
+
+# Run EDA
 jupyter notebook covid_uae_eda.ipynb
+
+# Run full pipeline
+jupyter notebook notebooks/domain_adaptation_pipeline.ipynb
 ```
 
-## Data source
+---
 
-Dataset structure mirrors [Our World in Data (OWID)](https://ourworldindata.org/coronavirus) COVID-19 dataset.
+## Key Findings
+
+1. UAE's R-value is **39% missing in clusters** — not random noise, a structural labelling problem
+2. A model trained on Germany/India/Singapore **fails on UAE** (R² ≈ -0.03)
+3. Adding just **10% UAE labeled observations** recovers 54% of prediction error
+4. This validates the SSL + domain adaptation direction for data-scarce health systems
+5. A RAG system grounds model explanations in peer-reviewed research

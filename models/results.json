@@ -1,0 +1,12 @@
+{
+  "baseline": {
+    "mae": 0.4937,
+    "r2": -0.0317
+  },
+  "adapted": {
+    "mae": 0.2258,
+    "r2": 0.7605
+  },
+  "improvement_pct": 54.3,
+  "uae_labeled_pct": 10
+}

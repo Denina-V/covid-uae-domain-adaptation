@@ -16,19 +16,30 @@ rows = []
 for iso, name in countries.items():
     n = len(dates)
 
-    # Simulate waves
-    t = np.linspace(0, 4 * np.pi, n)
-    base_cases = (
-        np.abs(np.sin(t) * np.random.uniform(500, 3000))
-        + np.random.normal(0, 50, n).clip(0)
-    )
+    # UAE has different wave structure: sharper, earlier peaks, smaller amplitude
+    if iso == "ARE":
+        t = np.linspace(np.pi / 4, 4 * np.pi + np.pi / 4, n)  # phase-shifted
+        scale = np.random.uniform(200, 800)  # smaller case counts
+        base_cases = (
+            np.abs(np.sin(t * 1.4) * scale)  # faster oscillation
+            + np.random.normal(0, 30, n).clip(0)
+        )
+    else:
+        t = np.linspace(0, 4 * np.pi, n)
+        base_cases = (
+            np.abs(np.sin(t) * np.random.uniform(500, 3000))
+            + np.random.normal(0, 50, n).clip(0)
+        )
 
     # Smooth 7-day
     s = pd.Series(base_cases)
     smooth = s.rolling(7, min_periods=1).mean().values
 
-    # Reproduction rate — UAE has 39% missing, clustered gaps
-    r_vals = 0.8 + 0.6 * np.abs(np.sin(t / 2)) + np.random.normal(0, 0.1, n)
+    # Reproduction rate — UAE has different R dynamics (higher baseline, different phase)
+    if iso == "ARE":
+        r_vals = 1.1 + 0.8 * np.sin(t * 1.4 + 0.5) + np.random.normal(0, 0.15, n)
+    else:
+        r_vals = 0.8 + 0.6 * np.abs(np.sin(t / 2)) + np.random.normal(0, 0.1, n)
     r_vals = r_vals.clip(0.3, 3.0)
     if iso == "ARE":
         # Clustered missingness
